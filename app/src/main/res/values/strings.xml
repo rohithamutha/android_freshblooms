@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Fresh Blooms</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string-array name="order_status_array">
+        <item>Pending</item>
+        <item>Processing</item>
+        <item>Delivering</item>
+        <item>Delivered</item>
+        <item>Cancelled</item>
+    </string-array>
+</resources>
