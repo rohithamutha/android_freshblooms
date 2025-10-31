@@ -1,0 +1,71 @@
+<?php
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Headers: Content-Type');
+
+include('config.php');
+
+// Read JSON input from Android app
+$data = json_decode(file_get_contents("php://input"), true);
+
+// Extract input values
+$category = isset($data['category']) ? $data['category'] : 'flowers';
+$max_price = isset($data['max_price']) ? intval($data['max_price']) : 500;
+$season = isset($data['season']) ? strtolower($data['season']) : null;
+
+// Only proceed if the season is "summer"
+if ($season !== 'summer') {
+    echo json_encode([
+        "success" => false,
+        "message" => "Only summer season items are allowed."
+    ]);
+    exit;
+}
+
+// Override price for design category
+if ($category === "design") {
+    $max_price = 100000;
+}
+
+$response = [];
+
+$query = "SELECT * FROM flowersales WHERE category = ? AND price <= ? AND seasonal_flowers = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("sis", $category, $max_price, $season);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $description = $row['description'];
+        $shortDescription = strlen($description) > 80
+            ? substr($description, 0, 80) . '...'
+            : $description;
+
+        $response[] = [
+            "id" => $row['id'],
+            "flowername" => $row['flowername'],
+            "image" => $row['image'],
+            "price" => $row['price'],
+            "seasonal_flowers" => $row['seasonal_flowers'],
+            "description" => $description,
+            "short_description" => $shortDescription,
+            "category" => $row['category']
+        ];
+    }
+
+    echo json_encode([
+        "success" => true,
+        "data" => $response
+    ]);
+} else {
+    echo json_encode([
+        "success" => false,
+        "message" => "No summer flowers found under the selected filters."
+    ]);
+}
+
+$stmt->close();
+$conn->close();
+?>
